@@ -73,7 +73,7 @@ class MvelServiceTest {
                 new Argument("arg3",
                         "dummyArgument",
                         "BDP",
-                        ""
+                        "party.isHighRisk"
                 ),
                 new Argument(
                         "arg4",
@@ -96,25 +96,40 @@ class MvelServiceTest {
         );
 
         //Dummy question2
-        Question question2 = new Question("test1",
+        Question question2 = new Question("test2",
                 "Tax Number",
                 "party.taxNumber",
                 new String[]{"9"},
                 false,
                 "legalName == 'Yes'",
                 false,
-                "",
+                "dummyArgument == 'Yes'",
                 argumentsForQuetsion2
+        );
+
+        //Dummy question2
+        Question question3 = new Question("test3",
+                "Question 3",
+                "party.isHighRisk",
+                new String[]{"Yes"},
+                true,
+                "",
+                false,
+                "",
+                null
         );
 
         questionList.add(question1);
         questionList.add(question2);
+        questionList.add(question3);
 
         List<Question> resultQuestions = mvelService.executeMvel(questionList);
 
         assertFalse(resultQuestions.get(0).getVisible(), "Question 1 should not be visible.");
         assertTrue(resultQuestions.get(0).getReadOnly(), "Question 1 should be read only.");
         assertTrue(resultQuestions.get(1).getVisible(), "Question 2 should be visible.");
-        assertFalse(resultQuestions.get(1).getReadOnly(), "Question 2 should be read only.");
+        assertTrue(resultQuestions.get(1).getReadOnly(), "Question 2 should be read only.");
+        assertTrue(resultQuestions.get(2).getVisible(), "Question 3 should be visible.");
+        assertFalse(resultQuestions.get(2).getReadOnly(), "Question 3 should not be read only.");
     }
 }
