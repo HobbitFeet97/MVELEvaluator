@@ -203,7 +203,61 @@ class MvelServiceTest {
 
         List<Question> resultQuestions = mvelService.executeMvel(questionList);
 
-        assertFalse(resultQuestions.get(0).getValue() == null, "Question 1 should not have it's value cleared.");
-        assertTrue(resultQuestions.get(1).getValue() == null, "Question 2 should have it's value cleared.");
+        assertNotNull(resultQuestions.get(0).getValue(), "Question 1 should not have it's value cleared.");
+        assertNull(resultQuestions.get(1).getValue(), "Question 2 should have it's value cleared.");
+    }
+
+    @Test
+    void executeDisjointFunction(){
+
+        List<Question> questionList = new ArrayList<>();
+
+        //Argument list for the question
+        Argument[] argumentsForQuetsion1 = new Argument[]{
+                new Argument("arg1",
+                        "legalName",
+                        "BDP",
+                        "party.legalName"
+                ),
+                new Argument("arg2",
+                        "testInfo",
+                        "BDP",
+                        "party.additionalInfo"
+                )
+        };
+
+        //Dummy question1
+        Question question1 = new Question("test1",
+                "Label 1",
+                "party.legalName",
+                new String[]{"1", "2", "3"},
+                false,
+                "disjoint(legalName, testInfo)",
+                false,
+                "!disjoint(legalName, testInfo)",
+                "",
+                argumentsForQuetsion1
+        );
+
+        //Dummy question2
+        Question question2 = new Question("test2",
+                "Label 2",
+                "party.additionalInfo",
+                new String[]{"3", "4", "5"},
+                false,
+                "",
+                false,
+                "",
+                "",
+                null
+        );
+
+        questionList.add(question1);
+        questionList.add(question2);
+
+        List<Question> updatedQuestions = mvelService.executeMvel(questionList);
+
+        assertTrue(updatedQuestions.get(0).getReadOnly(), "Question 1 should be read only.");
+        assertFalse(updatedQuestions.get(0).getVisible(), "Question 1 should not be visible.");
     }
 }

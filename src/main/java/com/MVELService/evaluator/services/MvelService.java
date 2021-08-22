@@ -29,15 +29,16 @@ public class MvelService {
     private static final String ARG_TYPE_FILTER = "FILTER";
     //Predefined functions to be loaded into the MVEL evaluator
     private static String PREDEFINED_FUNCTION_GREATER_THAN = "def greaterThan(value1, value2){return value1 > value2;};";
+    private static String PREDEFINED_FUNCTION_DISJOINT = "import java.util.*; def disjoint(list1, list2){ if(list1 == null || list2 == null){return false;} return Collections.disjoint(Arrays.asList(list1), Arrays.asList(list2)); };";
     //Variable factory to hold list of predefined constants for MVEL expressions
     VariableResolverFactory variableFactory = new MapVariableResolverFactory();
 
     public List<Question> executeMvel(List<Question> questions){
 
         if (!loaded){
-            variableFactory.createVariable("CONSTANT_1", new int[]{1,2,3,4});
+            variableFactory.createVariable("CONSTANT_1", new String[]{"1","2"});
             MVEL.eval(
-                    PREDEFINED_FUNCTION_GREATER_THAN,
+                    PREDEFINED_FUNCTION_GREATER_THAN + PREDEFINED_FUNCTION_DISJOINT,
                     variableFactory
             );
             loaded = true;
@@ -64,7 +65,7 @@ public class MvelService {
 
         HashMap<String, Object> args = new HashMap<>();
 
-        questions.stream().forEach(question -> {
+        questions.forEach(question -> {
             if (question.getArgs() != null){
                 Arrays.stream(question.getArgs()).forEach(argument -> {
                     if (argument.getType().equals(ARG_TYPE_BDP)){
@@ -74,10 +75,17 @@ public class MvelService {
                                 .orElse(new Question(null, null, null, new String[]{""}, null, null, null, null, null, null))
                                 .getValue();
                         if (value != null){
-                            args.put(
-                                    argument.getArgumentName(),
-                                    value[0]
-                            );
+                            if (value.length == 1) {
+                                args.put(
+                                        argument.getArgumentName(),
+                                        value[0]
+                                );
+                            }else{
+                                args.put(
+                                        argument.getArgumentName(),
+                                        value
+                                );
+                            }
                         }else{
                             args.put(
                                     argument.getArgumentName(),
