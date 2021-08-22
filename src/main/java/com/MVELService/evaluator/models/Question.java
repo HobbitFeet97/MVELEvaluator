@@ -10,9 +10,10 @@ public class Question {
     private String visibleExpression;
     private Boolean readOnly;
     private String readOnlyExpression;
+    private String clearValueExpression;
     private Argument[] args;
 
-    public Question(String id, String label, String bdp, String[] value, Boolean visible, String visibleExpression, Boolean readOnly, String readOnlyExpression, Argument[] args) {
+    public Question(String id, String label, String bdp, String[] value, Boolean visible, String visibleExpression, Boolean readOnly, String readOnlyExpression, String clearValueExpression, Argument[] args) {
         this.id = id;
         this.label = label;
         this.bdp = bdp;
@@ -21,6 +22,7 @@ public class Question {
         this.visibleExpression = visibleExpression;
         this.readOnly = readOnly;
         this.readOnlyExpression = readOnlyExpression;
+        this.clearValueExpression = clearValueExpression;
         this.args = args;
     }
 
@@ -90,5 +92,13 @@ public class Question {
 
     public void setReadOnlyExpression(String readOnlyExpression) {
         this.readOnlyExpression = readOnlyExpression;
+    }
+
+    public String getClearValueExpression() {
+        return clearValueExpression;
+    }
+
+    public void setClearValueExpression(String clearValueExpression) {
+        this.clearValueExpression = clearValueExpression;
     }
 }

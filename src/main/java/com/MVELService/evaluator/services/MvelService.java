@@ -71,7 +71,7 @@ public class MvelService {
                         String[] value = questions.stream().filter(q -> q.getBdp()
                                 .equals(argument.getValue()))
                                 .findFirst()
-                                .orElse(new Question(null, null, null, new String[]{""}, null, null, null, null, null))
+                                .orElse(new Question(null, null, null, new String[]{""}, null, null, null, null, null, null))
                                 .getValue();
                         if (value != null){
                             args.put(
@@ -99,7 +99,7 @@ public class MvelService {
 
     private String[] returnExpressions(Question question){
 
-        return new String[]{question.getVisibleExpression(), question.getReadOnlyExpression()};
+        return new String[]{question.getVisibleExpression(), question.getReadOnlyExpression(), question.getClearValueExpression()};
     }
 
     private String formatQuestionExpressions(Question question){
@@ -114,7 +114,7 @@ public class MvelService {
             }
         }
 
-        return COLLAPSED_SENTENCE_1+sb.toString()+COLLAPSED_SENTENCE_4;
+        return COLLAPSED_SENTENCE_1+ sb +COLLAPSED_SENTENCE_4;
     }
 
     private void updateQuestion(ArrayList<Object> results, Question question){
@@ -123,6 +123,9 @@ public class MvelService {
         }
         if (results.get(1) instanceof Boolean){
             question.setReadOnly((Boolean) results.get(1));
+        }
+        if (results.get(2) instanceof Boolean && (Boolean) results.get(2)){
+            question.setValue(null);
         }
     }
 }
