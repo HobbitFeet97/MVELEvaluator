@@ -3,12 +3,14 @@ package com.MVELService.evaluator.components;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+@Component
 public class JsonHandler {
 
     ObjectMapper objectMapper = defaultObjectMapper();

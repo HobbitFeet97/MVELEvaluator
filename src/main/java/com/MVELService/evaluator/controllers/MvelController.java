@@ -3,6 +3,7 @@ package com.MVELService.evaluator.controllers;
 
 import com.MVELService.evaluator.models.Question;
 import com.MVELService.evaluator.services.MvelService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,7 +24,7 @@ public class MvelController {
     }
 
     @PostMapping
-    public List<Question> validateSection(@RequestBody List<Question> questions){
+    public List<Question> validateSection(@RequestBody List<Question> questions) throws JsonProcessingException {
         return mvelService.executeMvel(questions);
     }
 }

@@ -1,26 +1,38 @@
 package com.MVELService.evaluator.services;
 
 import com.MVELService.evaluator.models.Argument;
+import com.MVELService.evaluator.models.Constant;
 import com.MVELService.evaluator.models.Question;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ExtendWith(MockitoExtension.class)
 class MvelServiceTest {
 
+    @InjectMocks
     private MvelService mvelService;
+
+    @Mock
+    private ConstantService mockConstantService;
 
     @BeforeEach
     void setUp() {
-        mvelService = new MvelService();
+        mvelService = new MvelService(mockConstantService);
     }
 
     @Test
-    void executeMvelForOneQuestion() {
+    void executeMvelForOneQuestion(){
 
         List<Question> questionList = new ArrayList<>();
 
@@ -260,4 +272,5 @@ class MvelServiceTest {
         assertTrue(updatedQuestions.get(0).getReadOnly(), "Question 1 should be read only.");
         assertFalse(updatedQuestions.get(0).getVisible(), "Question 1 should not be visible.");
     }
+
 }

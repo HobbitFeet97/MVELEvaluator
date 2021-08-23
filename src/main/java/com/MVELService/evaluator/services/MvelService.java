@@ -1,6 +1,10 @@
 package com.MVELService.evaluator.services;
 
+import com.MVELService.evaluator.components.JsonHandler;
+import com.MVELService.evaluator.models.Constant;
 import com.MVELService.evaluator.models.Question;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.mvel2.MVEL;
 import org.mvel2.integration.VariableResolverFactory;
@@ -13,6 +17,10 @@ import java.util.*;
 @Service
 public class MvelService {
 
+    //Constant Service
+    private final ConstantService constantService;
+    //Json Handler
+    private final JsonHandler jsonHandler = new JsonHandler();
     //Logging strings
     private static final String ARGUMENT_LOGGING = "Arguments generated are: ";
     private static final String EXPRESSION_LOGGING = "Expressions generated for question id %s are: ";
@@ -33,10 +41,25 @@ public class MvelService {
     //Variable factory to hold list of predefined constants for MVEL expressions
     VariableResolverFactory variableFactory = new MapVariableResolverFactory();
 
-    public List<Question> executeMvel(List<Question> questions){
+    public MvelService(ConstantService constantService) {
+        this.constantService = constantService;
+    }
+
+    public List<Question> executeMvel(List<Question> questions) {
 
         if (!loaded){
-            variableFactory.createVariable("CONSTANT_1", new String[]{"1","2"});
+            //Pre-load mvel service with all constants in the system, to be used in MVEL expressions
+            constantService.getAllConstants()
+                            .forEach(constant -> {
+                                try {
+                                    JsonNode node = jsonHandler.readJson(constant.getData());
+                                    List<HashMap<String, Object>> dictionaries = new ArrayList<>();
+                                    jsonHandler.fromJsonDictList(node, dictionaries);
+                                    variableFactory.createVariable(constant.getCode(), dictionaries);
+                                } catch (JsonProcessingException e) {
+                                    e.printStackTrace();
+                                }
+                            });
             MVEL.eval(
                     PREDEFINED_FUNCTION_GREATER_THAN + PREDEFINED_FUNCTION_DISJOINT,
                     variableFactory
