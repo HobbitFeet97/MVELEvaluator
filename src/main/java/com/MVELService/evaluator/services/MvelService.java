@@ -1,6 +1,8 @@
 package com.MVELService.evaluator.services;
 
 import com.MVELService.evaluator.components.JsonHandler;
+import com.MVELService.evaluator.models.Answer;
+import com.MVELService.evaluator.models.Argument;
 import com.MVELService.evaluator.models.Constant;
 import com.MVELService.evaluator.models.Question;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -10,8 +12,11 @@ import org.mvel2.MVEL;
 import org.mvel2.integration.VariableResolverFactory;
 import org.mvel2.integration.impl.MapVariableResolverFactory;
 import org.springframework.stereotype.Service;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -38,6 +43,7 @@ public class MvelService {
     //Predefined functions to be loaded into the MVEL evaluator
     private static String PREDEFINED_FUNCTION_GREATER_THAN = "def greaterThan(value1, value2){return value1 > value2;};";
     private static String PREDEFINED_FUNCTION_DISJOINT = "import java.util.*; def disjoint(list1, list2){ if(list1 == null || list2 == null){return false;} return Collections.disjoint(Arrays.asList(list1), Arrays.asList(list2)); };";
+    private static String PREDEFINED_FUNCTION_FILTER_LIST = "import java.util.ArrayList; def filterList(originalList, filter){ list = []; foreach(element : originalList){ if(filter(element)){ list.add(element); }; }; return list; };";
     //Variable factory to hold list of predefined constants for MVEL expressions
     VariableResolverFactory variableFactory = new MapVariableResolverFactory();
 
@@ -61,7 +67,7 @@ public class MvelService {
                                 }
                             });
             MVEL.eval(
-                    PREDEFINED_FUNCTION_GREATER_THAN + PREDEFINED_FUNCTION_DISJOINT,
+                    PREDEFINED_FUNCTION_GREATER_THAN + PREDEFINED_FUNCTION_DISJOINT + PREDEFINED_FUNCTION_FILTER_LIST + formatFilterExpressions(questions),
                     variableFactory
             );
             loaded = true;
@@ -95,7 +101,7 @@ public class MvelService {
                         String[] value = questions.stream().filter(q -> q.getBdp()
                                 .equals(argument.getValue()))
                                 .findFirst()
-                                .orElse(new Question(null, null, null, new String[]{""}, null, null, null, null, null, null))
+                                .orElse(new Question(null, null, null, new String[]{""}, null, null, null, null, null, null, null, null))
                                 .getValue();
                         if (value != null){
                             if (value.length == 1) {
@@ -115,11 +121,6 @@ public class MvelService {
                                     null
                             );
                         }
-                    }else if (argument.getType().equals(ARG_TYPE_FILTER)){
-                        args.put(
-                                argument.getArgumentName(),
-                                argument.getValue()
-                        );
                     }
                 });
             }
@@ -130,7 +131,7 @@ public class MvelService {
 
     private String[] returnExpressions(Question question){
 
-        return new String[]{question.getVisibleExpression(), question.getReadOnlyExpression(), question.getClearValueExpression()};
+        return new String[]{question.getVisibleExpression(), question.getReadOnlyExpression(), question.getClearValueExpression(), question.getAnswerExpression()};
     }
 
     private String formatQuestionExpressions(Question question){
@@ -145,7 +146,7 @@ public class MvelService {
             }
         }
 
-        return COLLAPSED_SENTENCE_1+ sb +COLLAPSED_SENTENCE_4;
+        return COLLAPSED_SENTENCE_1 + sb +COLLAPSED_SENTENCE_4;
     }
 
     private void updateQuestion(ArrayList<Object> results, Question question){
@@ -158,5 +159,47 @@ public class MvelService {
         if (results.get(2) instanceof Boolean && (Boolean) results.get(2)){
             question.setValue(null);
         }
+        if (results.get(3) != null && results.get(3) instanceof List){
+            question.setAnswers(formatQuestionAnswers((List<HashMap<String, String>>) results.get(3)));
+        }
+    }
+
+    private String formatFilterExpressions(List<Question> questions){
+
+        StringBuilder sb = new StringBuilder();
+
+        for (Question question : questions){
+            Argument[] args = question.getArgs();
+            for (Argument arg : args){
+                if (arg.getType().equals(ARG_TYPE_FILTER)){
+                    sb.append(createFilterFunction(arg));
+                }
+            }
+        }
+
+        return sb.toString();
+    }
+
+    private String createFilterFunction(Argument arg){
+        String function = "\r\n def %s($){ return %s; };";
+        return function.formatted(arg.getArgumentName(), arg.getValue());
+    }
+
+    private Answer[] formatQuestionAnswers(List<HashMap<String, String>> inputAnswers){
+
+        List<Answer> answers = new ArrayList<>();
+
+        for (HashMap<String, String> answer : inputAnswers){
+            answers.add(mapAnswer(answer));
+        }
+
+        return answers.toArray(Answer[]::new);
+    }
+
+    private Answer mapAnswer(HashMap<String, String> inputAnswer){
+        return new Answer(
+                inputAnswer.get("code"),
+                inputAnswer.get("description")
+        );
     }
 }

@@ -12,8 +12,10 @@ public class Question {
     private String readOnlyExpression;
     private String clearValueExpression;
     private Argument[] args;
+    private Answer[] answers;
+    private String answerExpression;
 
-    public Question(String id, String label, String bdp, String[] value, Boolean visible, String visibleExpression, Boolean readOnly, String readOnlyExpression, String clearValueExpression, Argument[] args) {
+    public Question(String id, String label, String bdp, String[] value, Boolean visible, String visibleExpression, Boolean readOnly, String readOnlyExpression, String clearValueExpression, Argument[] args, Answer[] answers, String answerExpression) {
         this.id = id;
         this.label = label;
         this.bdp = bdp;
@@ -24,6 +26,8 @@ public class Question {
         this.readOnlyExpression = readOnlyExpression;
         this.clearValueExpression = clearValueExpression;
         this.args = args;
+        this.answers = answers;
+        this.answerExpression = answerExpression;
     }
 
     public String getId() {
@@ -100,5 +104,21 @@ public class Question {
 
     public void setClearValueExpression(String clearValueExpression) {
         this.clearValueExpression = clearValueExpression;
+    }
+
+    public Answer[] getAnswers() {
+        return answers;
+    }
+
+    public void setAnswers(Answer[] answers) {
+        this.answers = answers;
+    }
+
+    public String getAnswerExpression() {
+        return answerExpression;
+    }
+
+    public void setAnswerExpression(String answerExpression) {
+        this.answerExpression = answerExpression;
     }
 }

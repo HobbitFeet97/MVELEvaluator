@@ -49,7 +49,9 @@ class MvelServiceTest {
                 false,
                 "value == 'No'",
                 "",
-                arguments
+                arguments,
+                null,
+                null
         );
 
         questionList.add(question1);
@@ -106,7 +108,9 @@ class MvelServiceTest {
                 false,
                 "taxNumber > 8",
                 "",
-                argumentsForQuetsion1
+                argumentsForQuetsion1,
+                null,
+                null
         );
 
         //Dummy question2
@@ -119,7 +123,9 @@ class MvelServiceTest {
                 false,
                 "dummyArgument == 'Yes'",
                 "",
-                argumentsForQuetsion2
+                argumentsForQuetsion2,
+                null,
+                null
         );
 
         //Dummy question2
@@ -132,6 +138,8 @@ class MvelServiceTest {
                 false,
                 "",
                 "",
+                null,
+                null,
                 null
         );
 
@@ -194,7 +202,9 @@ class MvelServiceTest {
                 false,
                 "greaterThan(taxNumber, 8)",
                 "taxNumber != 9",
-                argumentsForQuetsion1
+                argumentsForQuetsion1,
+                null,
+                null
         );
 
         //Dummy question2
@@ -207,7 +217,9 @@ class MvelServiceTest {
                 false,
                 "dummyArgument == 'Yes'",
                 "legalName == 'Yes'",
-                argumentsForQuetsion2
+                argumentsForQuetsion2,
+                null,
+                null
         );
 
         questionList.add(question1);
@@ -248,7 +260,9 @@ class MvelServiceTest {
                 false,
                 "!disjoint(legalName, testInfo)",
                 "",
-                argumentsForQuetsion1
+                argumentsForQuetsion1,
+                null,
+                null
         );
 
         //Dummy question2
@@ -261,6 +275,8 @@ class MvelServiceTest {
                 false,
                 "",
                 "",
+                null,
+                null,
                 null
         );
 
