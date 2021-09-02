@@ -41,9 +41,12 @@ public class MvelService {
     private static final String ARG_TYPE_BDP = "BDP";
     private static final String ARG_TYPE_FILTER = "FILTER";
     //Predefined functions to be loaded into the MVEL evaluator
-    private static String PREDEFINED_FUNCTION_GREATER_THAN = "def greaterThan(value1, value2){return value1 > value2;};";
-    private static String PREDEFINED_FUNCTION_DISJOINT = "import java.util.*; def disjoint(list1, list2){ if(list1 == null || list2 == null){return false;} return Collections.disjoint(Arrays.asList(list1), Arrays.asList(list2)); };";
-    private static String PREDEFINED_FUNCTION_FILTER_LIST = "import java.util.ArrayList; def filterList(originalList, filter){ list = []; foreach(element : originalList){ if(filter(element)){ list.add(element); }; }; return list; };";
+    private static final String PREDEFINED_FUNCTION_GREATER_THAN = "def greaterThan(value1, value2){return value1 > value2;};";
+    private static final String PREDEFINED_FUNCTION_DISJOINT = "import java.util.*; def disjoint(list1, list2){ if(list1 == null || list2 == null){return false;} return Collections.disjoint(Arrays.asList(list1), Arrays.asList(list2)); };";
+    private static final String PREDEFINED_FUNCTION_FILTER_LIST = "import java.util.ArrayList; def filterList(originalList, filter){ list = []; foreach(element : originalList){ if(filter(element)){ list.add(element); }; }; return list; };";
+    private static final String PREDEFINED_FUNCTION_VALIDATE_CHECK_DIGIT_1 = "def validateScenarioOne(inputValue){ characterWeighting = [\"A\": 10,\"B\": 11,\"C\": 12,\"D\": 13,\"E\": 14,\"F\": 15,\"G\": 16,\"H\": 17,\"I\": 18,\"J\": 19,\"K\": 20,\"L\": 21,\"M\": 22,\"N\": 23,\"O\": 24,\"P\": 25,\"Q\": 26,\"R\": 27,\"S\": 28,\"T\": 29,\"U\": 30,\"V\": 31,\"W\": 32,\"X\": 33,\"Y\": 34,\"Z\": 35]; positionWeighting = [9,8,7,6,5,4,3,2]; sum = 324; match = \"^[A-Z][0-9]{6}(\\\\([A,0-9]\\\\))\"; chars = inputValue.split(''); if(inputValue.matches(match)){ for(index = 0; index < 7; index++){ if(index == 0){ sum += (characterWeighting.get(chars[index]) * positionWeighting[index + 1]); }else{ sum += (Integer.valueOf(chars[index]) * positionWeighting[index + 1]); }; }; expectedDigit = (11 - (sum % 11)); if(expectedDigit == 11){return false;}else if(expectedDigit == 10){return chars[8] == 'A';}else{return chars[8] == String.valueOf(expectedDigit);}}else{return false;};};";
+    private static final String PREDEFINED_FUNCTION_VALIDATE_CHECK_DIGIT_2 = "def validateScenarioTwo(inputValue){ characterWeighting = [\"A\": 10,\"B\": 11,\"C\": 12,\"D\": 13,\"E\": 14,\"F\": 15,\"G\": 16,\"H\": 17,\"I\": 18,\"J\": 19,\"K\": 20,\"L\": 21,\"M\": 22,\"N\": 23,\"O\": 24,\"P\": 25,\"Q\": 26,\"R\": 27,\"S\": 28,\"T\": 29,\"U\": 30,\"V\": 31,\"W\": 32,\"X\": 33,\"Y\": 34,\"Z\": 35]; positionWeighting = [9,8,7,6,5,4,3,2]; sum = 0; match = \"^[A-Z]{2}[0-9]{6}(\\\\([A,0-9]\\\\))\"; chars = inputValue.split(''); if(inputValue.matches(match)){ for(index = 0; index < 8; index++){ if(index == 0 || index == 1){ sum += (characterWeighting.get(chars[index]) * positionWeighting[index]); }else{ sum += (Integer.valueOf(chars[index]) * positionWeighting[index]); }; }; expectedDigit = (11 - (sum % 11)); if(expectedDigit == 11){return false;}else if(expectedDigit == 10){return chars[9] == 'A';}else{return chars[9] == String.valueOf(expectedDigit);}}else{return false;};};";
+    private static final String PREDIFINED_FUNCTION_VALIDATE_CHECK_DIGIT = "def validateCheckDigit(inputValue){ if(inputValue.length() > 11 || inputValue.length() < 10){ return false; }else if(inputValue.length() == 10){ return validateScenarioOne(inputValue); }else{ return validateScenarioTwo(inputValue); }; };";
     //Variable factory to hold list of predefined constants for MVEL expressions
     VariableResolverFactory variableFactory = new MapVariableResolverFactory();
 
@@ -67,7 +70,12 @@ public class MvelService {
                                 }
                             });
             MVEL.eval(
-                    PREDEFINED_FUNCTION_GREATER_THAN + PREDEFINED_FUNCTION_DISJOINT + PREDEFINED_FUNCTION_FILTER_LIST + formatFilterExpressions(questions),
+                    PREDEFINED_FUNCTION_GREATER_THAN
+                            + PREDEFINED_FUNCTION_DISJOINT
+                            + PREDEFINED_FUNCTION_FILTER_LIST
+                            + PREDEFINED_FUNCTION_VALIDATE_CHECK_DIGIT_1
+                            + PREDEFINED_FUNCTION_VALIDATE_CHECK_DIGIT_2
+                            + PREDIFINED_FUNCTION_VALIDATE_CHECK_DIGIT,
                     variableFactory
             );
             loaded = true;
