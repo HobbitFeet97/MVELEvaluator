@@ -40,6 +40,8 @@ public class MvelService {
     //Constants which represent argument types
     private static final String ARG_TYPE_BDP = "BDP";
     private static final String ARG_TYPE_FILTER = "FILTER";
+    private static final String ARG_TYPE_CODE = "CODE";
+    private static final String ARG_TYPE_DESCRIPTION = "DESCRIPTION";
     //Predefined functions to be loaded into the MVEL evaluator
     private static final String PREDEFINED_FUNCTION_GREATER_THAN = "def greaterThan(value1, value2){return value1 > value2;};";
     private static final String PREDEFINED_FUNCTION_DISJOINT = "import java.util.*; def disjoint(list1, list2){ if(list1 == null || list2 == null){return false;} return Collections.disjoint(Arrays.asList(list1), Arrays.asList(list2)); };";
@@ -47,6 +49,8 @@ public class MvelService {
     private static final String PREDEFINED_FUNCTION_VALIDATE_CHECK_DIGIT_1 = "def validateScenarioOne(inputValue){ characterWeighting = [\"A\": 10,\"B\": 11,\"C\": 12,\"D\": 13,\"E\": 14,\"F\": 15,\"G\": 16,\"H\": 17,\"I\": 18,\"J\": 19,\"K\": 20,\"L\": 21,\"M\": 22,\"N\": 23,\"O\": 24,\"P\": 25,\"Q\": 26,\"R\": 27,\"S\": 28,\"T\": 29,\"U\": 30,\"V\": 31,\"W\": 32,\"X\": 33,\"Y\": 34,\"Z\": 35]; positionWeighting = [9,8,7,6,5,4,3,2]; sum = 324; match = \"^[A-Z][0-9]{6}(\\\\([A,0-9]\\\\))\"; chars = inputValue.split(''); if(inputValue.matches(match)){ for(index = 0; index < 7; index++){ if(index == 0){ sum += (characterWeighting.get(chars[index]) * positionWeighting[index + 1]); }else{ sum += (Integer.valueOf(chars[index]) * positionWeighting[index + 1]); }; }; expectedDigit = (11 - (sum % 11)); if(expectedDigit == 11){return false;}else if(expectedDigit == 10){return chars[8] == 'A';}else{return chars[8] == String.valueOf(expectedDigit);}}else{return false;};};";
     private static final String PREDEFINED_FUNCTION_VALIDATE_CHECK_DIGIT_2 = "def validateScenarioTwo(inputValue){ characterWeighting = [\"A\": 10,\"B\": 11,\"C\": 12,\"D\": 13,\"E\": 14,\"F\": 15,\"G\": 16,\"H\": 17,\"I\": 18,\"J\": 19,\"K\": 20,\"L\": 21,\"M\": 22,\"N\": 23,\"O\": 24,\"P\": 25,\"Q\": 26,\"R\": 27,\"S\": 28,\"T\": 29,\"U\": 30,\"V\": 31,\"W\": 32,\"X\": 33,\"Y\": 34,\"Z\": 35]; positionWeighting = [9,8,7,6,5,4,3,2]; sum = 0; match = \"^[A-Z]{2}[0-9]{6}(\\\\([A,0-9]\\\\))\"; chars = inputValue.split(''); if(inputValue.matches(match)){ for(index = 0; index < 8; index++){ if(index == 0 || index == 1){ sum += (characterWeighting.get(chars[index]) * positionWeighting[index]); }else{ sum += (Integer.valueOf(chars[index]) * positionWeighting[index]); }; }; expectedDigit = (11 - (sum % 11)); if(expectedDigit == 11){return false;}else if(expectedDigit == 10){return chars[9] == 'A';}else{return chars[9] == String.valueOf(expectedDigit);}}else{return false;};};";
     private static final String PREDIFINED_FUNCTION_VALIDATE_CHECK_DIGIT = "def validateCheckDigit(inputValue){ if(inputValue.length() > 11 || inputValue.length() < 10){ return false; }else if(inputValue.length() == 10){ return validateScenarioOne(inputValue); }else{ return validateScenarioTwo(inputValue); }; };";
+    private static final String PREDEFINED_FUNCTION_TRANSFORM_LIST = "import java.util.ArrayList; def transformList(originalList, transformation){ list = []; foreach(element : originalList){ list.add(transformation(element)); }; return list; };";
+    private static final String PREDEFINED_FUNCTION_TRANSFORM_LIST_WITH_FILTER = "def transformListWithFilter(originalList, mapper, filter){ list = []; foreach(element : originalList){ if(filter(element)){ list.add(mapper(element)); }; }; return list; };";
     //Variable factory to hold list of predefined constants for MVEL expressions
     VariableResolverFactory variableFactory = new MapVariableResolverFactory();
 
@@ -75,21 +79,31 @@ public class MvelService {
                             + PREDEFINED_FUNCTION_FILTER_LIST
                             + PREDEFINED_FUNCTION_VALIDATE_CHECK_DIGIT_1
                             + PREDEFINED_FUNCTION_VALIDATE_CHECK_DIGIT_2
-                            + PREDIFINED_FUNCTION_VALIDATE_CHECK_DIGIT,
+                            + PREDIFINED_FUNCTION_VALIDATE_CHECK_DIGIT
+                            + PREDEFINED_FUNCTION_TRANSFORM_LIST
+                            + PREDEFINED_FUNCTION_TRANSFORM_LIST_WITH_FILTER,
                     variableFactory
             );
             loaded = true;
         }
 
-        //Generate global list of arguments to be used in the MVEL evaluator
+
+        //Generate global list of arguments and filter expressions to be used in the MVEL evaluator
         HashMap<String, Object> arguments = generateArguments(questions);
+        String formattedFilterExpressions = formatFilterExpressions(questions);
+        String formattedMapperExpressions = formatMapperExpressions(questions);
+        VariableResolverFactory currVarFactory = new MapVariableResolverFactory();
+        VariableResolverFactory additionalFactory = new MapVariableResolverFactory();
+        additionalFactory.setNextFactory(variableFactory);
+        MVEL.eval(formattedFilterExpressions + formattedMapperExpressions, additionalFactory);
+        currVarFactory.setNextFactory(additionalFactory);
         log.info(ARGUMENT_LOGGING+arguments);
 
         for (Question question : questions){
             //Format the expressions to be evaluated
             String expressions = formatQuestionExpressions(question);
             log.info(String.format(EXPRESSION_LOGGING, question.getId())+expressions);
-            ArrayList<Object> results = (ArrayList<Object>) MVEL.eval(expressions, arguments, variableFactory);
+            ArrayList<Object> results = (ArrayList<Object>) MVEL.eval(expressions, arguments, currVarFactory);
             log.info(String.format(MVEL_RESULT_LOGGING, question.getId())+results);
             //Update the question with the results of MVEL
             updateQuestion(results, question);
@@ -191,6 +205,33 @@ public class MvelService {
     private String createFilterFunction(Argument arg){
         String function = "\r\n def %s($){ return %s; };";
         return function.formatted(arg.getArgumentName(), arg.getValue());
+    }
+
+    private String formatMapperExpressions(List<Question> questions){
+
+        StringBuilder sb = new StringBuilder();
+
+        for (Question question : questions){
+            Map<String, List<Argument>> mappers = generateMappersForQuestion(question.getArgs());
+            for (String mapperName : mappers.keySet()){
+                sb.append(createMapperFunction(mapperName, mappers.get(mapperName)));
+            }
+        }
+        return sb.toString();
+    }
+
+    private String createMapperFunction(String mapperName, List<Argument> arguments){
+        String function = "\r\n def %s($){ return [\"%s\": %s, \"%s\": %s]; } \r\n";
+        return function.formatted(mapperName, arguments.get(0).getType().toLowerCase(), arguments.get(0).getValue(), arguments.get(1).getType().toLowerCase(), arguments.get(1).getValue());
+    }
+
+    private Map<String, List<Argument>> generateMappersForQuestion(Argument[] arguments){
+
+        List<Argument> args = Arrays.asList(arguments);
+
+        Map<String, List<Argument>> argsForMapping = args.stream().filter(arg -> arg.getType().equals(ARG_TYPE_CODE) || arg.getType().equals(ARG_TYPE_DESCRIPTION)).collect(Collectors.groupingBy(a -> a.getArgumentName()));
+
+        return argsForMapping;
     }
 
     private Answer[] formatQuestionAnswers(List<HashMap<String, String>> inputAnswers){
