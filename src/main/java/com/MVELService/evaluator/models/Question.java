@@ -5,6 +5,7 @@ public class Question {
     private final String id;
     private String label;
     private String bdp;
+    private String type;
     private String[] value;
     private Boolean visible;
     private String visibleExpression;
@@ -15,10 +16,12 @@ public class Question {
     private Answer[] answers;
     private String answerExpression;
 
-    public Question(String id, String label, String bdp, String[] value, Boolean visible, String visibleExpression, Boolean readOnly, String readOnlyExpression, String clearValueExpression, Argument[] args, Answer[] answers, String answerExpression) {
+
+    public Question(String id, String label, String bdp, String type, String[] value, Boolean visible, String visibleExpression, Boolean readOnly, String readOnlyExpression, String clearValueExpression, Argument[] args, Answer[] answers, String answerExpression) {
         this.id = id;
         this.label = label;
         this.bdp = bdp;
+        this.type = type;
         this.value = value;
         this.visible = visible;
         this.visibleExpression = visibleExpression;
@@ -48,6 +51,14 @@ public class Question {
 
     public void setBdp(String bdp) {
         this.bdp = bdp;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public Boolean getVisible() {

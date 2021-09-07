@@ -3,11 +3,11 @@ package com.MVELService.evaluator.services;
 import com.MVELService.evaluator.components.JsonHandler;
 import com.MVELService.evaluator.models.Answer;
 import com.MVELService.evaluator.models.Argument;
-import com.MVELService.evaluator.models.Constant;
 import com.MVELService.evaluator.models.Question;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.mvel2.MVEL;
 import org.mvel2.integration.VariableResolverFactory;
 import org.mvel2.integration.impl.MapVariableResolverFactory;
@@ -35,6 +35,7 @@ public class MvelService {
     private static final String COLLAPSED_SENTENCE_2 = "results.add(";
     private static final String COLLAPSED_SENTENCE_3 = ");";
     private static final String COLLAPSED_SENTENCE_4 = "return results;";
+    private static final String[] QUESTION_TYPES_WITH_OPTIONS = new String[]{"DROPDOWN", "RADIOBOX", "CHECKBOX", "MULTIDROPDOWN"};
     //Variable which will control when predefined functions are loaded into MVEL
     private static boolean loaded = false;
     //Constants which represent argument types
@@ -109,7 +110,9 @@ public class MvelService {
             updateQuestion(results, question);
         }
 
-        return questions;
+        List<Question> updatedQuestions = validateQuestionValues(questions);
+
+        return updatedQuestions;
     }
 
     private HashMap<String, Object> generateArguments(List<Question> questions){
@@ -123,7 +126,7 @@ public class MvelService {
                         String[] value = questions.stream().filter(q -> q.getBdp()
                                 .equals(argument.getValue()))
                                 .findFirst()
-                                .orElse(new Question(null, null, null, new String[]{""}, null, null, null, null, null, null, null, null))
+                                .orElse(new Question(null, null, null, null, new String[]{""}, null, null, null, null, null, null, null, null))
                                 .getValue();
                         if (value != null){
                             if (value.length == 1) {
@@ -250,5 +253,34 @@ public class MvelService {
                 inputAnswer.get("code"),
                 inputAnswer.get("description")
         );
+    }
+
+    private List<Question> validateQuestionValues(List<Question> questions){
+
+        List<Question> updatedQuestions = questions.stream()
+                .map(this::updateQuestionValuesBasedOnOptions)
+                .collect(Collectors.toList());
+
+        return updatedQuestions;
+    }
+
+    private Question updateQuestionValuesBasedOnOptions(Question question){
+
+        if (Arrays.asList(QUESTION_TYPES_WITH_OPTIONS).contains(question.getType())){
+
+            List<String> answerCodes = Arrays.stream(question.getAnswers())
+                    .map(answer -> answer.getCode())
+                    .collect(Collectors.toList());
+
+            List<String> updatedAnswers = Arrays.stream(question.getValue())
+                    .filter(answerCodes::contains)
+                    .collect(Collectors.toList());
+
+            question.setValue(updatedAnswers.toArray(new String[0]));
+
+            return question;
+        }else{
+            return question;
+        }
     }
 }
